@@ -10,20 +10,25 @@
 <body>
     <h1 class="title"> Tic-Tac-Toe</h1>
     <div class="interface">
-        <div class="mode dropdown">
-            <button class="dropbtn">Dropdown</button>
-            <div class="dropdown-content">
-                <a href="#">Easy</a>
-                <a href="#">medium</a>
-                <a href="#">Hard</a>
-                <a href="#">Play a friend</a>
+        <form action="" method="post">
+            <select name="mode" id="mode">
+                <option value="play a friend">play a friend</option>
+                <option value="easy cp">easy cp</option>
+                <option value="medium cp">medium cp</option>
+                <option value="hard cp">hard cp</option>
+            </select>
+        </form>
+        <div class="players">
+            <div class="playerX">
+                <p class="name">Player X</p>
+            </div>
+            <div class="playerO">
+                <p class="name">Player O</p>
             </div>
         </div>
-        <div class="players">
-            <div class="playerX"></div>
-            <div class="playerO"></div>
+        <div class="prompt">
+            <p>start a game or select a player </p>    
         </div>
-        <div class="prompt"></div>
         <div class="gameboard">
             <div class="space" id="spot1"></div>
             <div class="space" id="spot2"></div>
@@ -35,7 +40,9 @@
             <div class="space" id="spot8"></div>
             <div class="space" id="spot9"></div>
         </div>
-        <div class="restart"></div>
+        <div class="restart">
+            <button class="restart">resart?</button>
+        </div>
     </div>
     
 </body>
