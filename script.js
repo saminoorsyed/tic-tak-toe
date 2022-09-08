@@ -1,10 +1,10 @@
 const spaces = document.querySelectorAll('.draw')
 const chooseO = document.querySelector('.playerO')
 
-const moves = []
+let moves = []
 // flags
 // true means X turn, false means O turn
-let playerFlag = false;
+let playerFlag = true;
 let startGameFlag = false;
 
 
@@ -28,8 +28,9 @@ drawMove = (move) => {
 playTurnX =()=> {
     // if the game has already started, player cannot switch teams
     if (startGameFlag) return
-    // startGameFlag = !startGameFlag
+    startGameFlag = !startGameFlag
     computerMove()
+    playerFlag = false
 }
 
 computerMove = () => {
@@ -41,14 +42,31 @@ computerMove = () => {
         move = Math.round((Math.random()*9)+.49)
     }
     moves.push(move)
-    const CpMove = spaces[move]
+    // node list index starts at 0, so we need to subtract 1
+    const CpMove = spaces[move-1]
     drawMove(CpMove)
 }
 
 playerMove = (e)=> {
-    console.log(e.target)
+    if (!startGameFlag) startGameFlag = !startGameFlag;
+    const move = parseInt(e.target.dataset.spot)
+    if (moves.includes(move)) return
+    moves.push(move);
     drawMove(e.target)
+    playerFlag = !playerFlag
+    setTimeout(()=>{
+        computerMove()
+        playerFlag = !playerFlag
+    },100)
+}
 
+restart = () => {
+    console.log ('hello')
+    spaces.forEach((space) => {
+        ctx = space.getContext('2d')
+        ctx.clearRect(0,0,100,100)
+    })
+    moves = []
 }
 
 spaces.forEach(space => space.addEventListener('click', playerMove));
