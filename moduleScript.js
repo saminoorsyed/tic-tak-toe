@@ -33,7 +33,7 @@ const gameBoard=(()=>{
 
 // factory function that maintains the player flag and combines that to push the player move to GameBoard
 const Player = (playerFlag)=>{
-    
+    // true playerflag is for X, false is for O
     const makeMove = (move) => {
         gameBoard.pushPlayerMove(playerFlag, move)
     }
@@ -83,3 +83,38 @@ const Computer = (()=>{
         chooseMove
     }
 })();
+
+const Game = (()=> {
+
+    const playerX = Player(true);
+    const playerO = Player(false);
+    
+    const checkWin =(playerFlag) => checkRows(playerFlag) || checkCols(playerFlag) || checkDiag(playerFlag);
+    checkRows =(playerFlag)=>{
+        const player = gameBoard.getPlayerMoves(playerFlag)
+        for (let i=1; i<=7; i+=3){
+            if (player.includes(i) && player.includes(i+1) && player.includes(i+2)){
+                return true;
+            }
+        }
+        return false;
+    }
+    checkCols =(playerFlag)=>{
+        const player = gameBoard.getPlayerMoves(playerFlag)
+        for (let i=1; i<=3; i++){
+            if (player.includes(i) && player.includes(i+3) && player.includes(i+6)) return true
+        }
+        return false
+    }
+    checkDiag =(playerFlag)=>{
+        const player = gameBoard.getPlayerMoves(playerFlag)
+        if (player.includes(1) && player.includes(5) && player.includes(9)) return true
+        if (player.includes(3) && player.includes(5) && player.includes(7)) return true
+        return false
+    }
+    return {
+        playerO,
+        playerX,
+        checkWin
+    }
+})
