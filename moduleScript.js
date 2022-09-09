@@ -4,21 +4,27 @@
 
 // tracks and gets player and computer moves, resets the move arrays
 const gameBoard=(()=>{
-    let _playerXMoves = []
-    let _playerOMoves = []
+    'use strict'
+    let _playerXMoves = [];
+    let _playerOMoves = [];
 
     const pushPlayerMove = (playerFlag, move) => {
-        playerFlag ? player = playerXMoves.push(move) : player = playerOMoves.push(move)
+        playerFlag ? player = _playerXMoves.push(move) : player = _playerOMoves.push(move);
     }
 
     const getPlayerMoves = (playerFlag) => {
-        playerFlag ? player = playerXMoves.push(move) : player = playerOMoves.push(move)
-        return player
+        return playerFlag ? _playerXMoves : _playerOMoves;
+    }
+
+    const reset = ()=> {
+        _playerXMoves = [];
+        _playerOMoves = [];
     }
 
     return {
         pushPlayerMove,
         getPlayerMoves,
+        reset,
     }
 })
 
