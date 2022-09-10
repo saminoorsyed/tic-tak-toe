@@ -135,6 +135,7 @@ const playGame = (() =>{
            playerX.makeMove(move);
            drawMove(spaces[move]);
            gameStart = true;
+           playerTurn = false;
         }
     }
     const drawMove = (moveCanvas) => {
@@ -153,10 +154,28 @@ const playGame = (() =>{
             ctx.stroke();
         }
     }
-
+    // careful with cp and move values. they don't match with the node list index and need to be adjusted
     const _playGame = (e)=>{
         gameStart = true
         move = parseInt(e.target.dataset.spot);
+        console.log(move)
+        let player;
+        let comp
+        if (playerTurn){
+            player = playerX;
+            comp = playerO;
+        }else{
+            player = playerO;
+            comp = playerX
+        }
+        player.makeMove(move)
+        drawMove(spaces[move-1])
+        playerTurn = !playerTurn;
+        const cpMove = computer.chooseMove(gameMode.value);
+        comp.makeMove(cpMove);
+        console.log(cpMove)
+        drawMove(spaces[cpMove-1]);
+        playerTurn = !playerTurn;
 
     }
     return {
