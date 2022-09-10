@@ -142,7 +142,7 @@ body {
     --interface-bg-color: #064e3b;
     --gboard-bg-color: #6ee7b7;
     --text-color: #6ee7b7;
-    --text-highlight-color: #d1fae5;
+    --text-highlight-color: #06b6d4;
     --highlight-color: #10b981;
 }
 
@@ -190,12 +190,17 @@ select {
 }
 
 .players>div {
-    padding: 10px;
-    border-radius: 20px;
+    padding: 3px;
+    border-radius: 10px;
 }
 
 .players>div>p {
     font-size: 1.5rem;
+}
+
+
+.highlighted{
+    border-bottom: solid 3px var(--gboard-bg-color);
 }
 
 .prompt,
@@ -272,6 +277,15 @@ select {
     border-right: none;
 }
 
+.space>canvas{
+    transition: transform 2s;
+
+}
+
+.spin {
+    transform: rotateY(360deg);
+}
+
 .restart {
     font-size: 1.5rem;
     background-color: var(--interface-bg-color);
@@ -279,3 +293,11 @@ select {
     border-radius: 20px;
     color: var(--text-color);
 }
+
+select:hover,
+.name:hover,
+.restart:hover
+{
+    color: var(--text-highlight-color);
+}
+

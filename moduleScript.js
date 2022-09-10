@@ -39,10 +39,17 @@ const Player = (player)=>{
         if (gameBoard.getAllMoves.length === 9) return;
         gameBoard.pushPlayerMove(playerFlag, move);
     }
+    const getMoves = () => {
+        return gameBoard.getPlayerMoves(playerFlag);
+    }
+    const getName = () => {
+        return playerFlag ? "X" : "O";
+    }
 
     return {
         makeMove,
-
+        getMoves,
+        getName,
     }
 }
 
@@ -127,41 +134,42 @@ const playGame = (() =>{
     const initGame = () => {
         spaces.forEach(space => space.addEventListener('click', _playGame));
         chooseO.addEventListener('click', setPlayerTurn);
-        chooseX.addEventListener('click', setPlayerTurn);
+        chooseX.classList.add('highlighted')
         }
     const setPlayerTurn = (e)=>{
         if (gameStart) return
-        if ("false" === e.target.dataset.flag){
-           const move = computer.chooseMove(gameMode.value);
-           playerX.makeMove(move);
-           drawMove(spaces[move]);
-           gameStart = true;
-           playerTurn = false;
-        }
+        chooseO.classList.add('highlighted')
+        chooseX.classList.remove('highlighted')
+        const move = computer.chooseMove(gameMode.value);
+        playerX.makeMove(move);
+        drawMove(spaces[move-1]);
+        gameStart = true;
+        playerTurn = false;
     }
     const drawMove = (moveCanvas) => {
         const canvas = moveCanvas
         const ctx = canvas.getContext("2d");
+        ctx.lineWidth = 7;
         if (playerTurn){
             ctx.beginPath();
-            ctx.moveTo(0,0);
-            ctx.lineTo(100,100);
-            ctx.moveTo(100,0);
-            ctx.lineTo(0,100);
+            ctx.moveTo(10,10);
+            ctx.lineTo(90,90);
+            ctx.moveTo(90,10);
+            ctx.lineTo(10,90);
             ctx.stroke();
         }else {
             ctx.beginPath();
-            ctx.arc(50,50,45,0,2*Math.PI);
+            ctx.arc(50,50,40,0,2*Math.PI);
             ctx.stroke();
         }
     }
-    // careful with cp and move values. they don't match with the node list index and need to be adjusted
+    // careful with cp<ove and move values. they don't match with the node list index and need to be adjusted
+    // flow of the game log and make player move, then computer move, check for win after each move.
     const _playGame = (e)=>{
         gameStart = true
         move = parseInt(e.target.dataset.spot);
-        console.log(move)
         let player;
-        let comp
+        let comp;
         if (playerTurn){
             player = playerX;
             comp = playerO;
@@ -169,10 +177,14 @@ const playGame = (() =>{
             player = playerO;
             comp = playerX
         }
+        if (gameBoard.getAllMoves().includes(move)){
+            return
+        }
         player.makeMove(move)
         drawMove(spaces[move-1])
         if (game.checkWin(playerTurn)){
-            winner();
+            animateGame.displayWinner(player);
+            setTimeout(reset, 2000);
             return
         }
         playerTurn = !playerTurn;
@@ -180,34 +192,65 @@ const playGame = (() =>{
         comp.makeMove(cpMove);
         drawMove(spaces[cpMove-1]);
         if (game.checkWin(playerTurn)){
-            winner();
+            animateGame.displayWinner(comp);
+            setTimeout(reset, 2000);
             return
         }
         playerTurn = !playerTurn;
-
     }
     
-    const winner = ()=>{
-        displayWinner();
-        reset();
-    }
 
-    const displayWinner = ()=>{
-        console.log("winner!")
-    }
     const reset = ()=> {
         gameBoard.reset()
+        animateGame.reset()
+        chooseO.classList.remove('highlighted');
+        chooseX.classList.add('highlighted');
+        playerTurn = true;
+        gameStart=false
         spaces.forEach((space) => {
             ctx = space.getContext('2d')
             ctx.clearRect(0,0,100,100)
         })
-
-
     }
     return {
         initGame,
+        reset,
+        playerTurn,
+        spaces,
     }
 })();
 
+const animateGame = (()=>{
+    const prompt = document.querySelector('.prompt>p')
+    const displayWinner = (winner)=>{
+        changePrompt(winner)
+        spinWinner(winner)
+    }
+
+    const changePrompt = (winner)=>{
+        prompt.textContent = `player ${winner.getName()} won!`
+    }
+
+    const spinWinner = (winner)=>{
+        playGame.spaces.forEach(space => {
+            if (winner.getMoves().includes(parseInt(space.dataset.spot))) {
+                space.classList.add('spin')
+            }
+        })
+    }
+
+    const reset = ()=>{
+        playGame.spaces.forEach(space => {
+                space.classList.remove('spin')
+            });
+        prompt.textContent = 'Start the game of select a player'
+    }
+    
+    return{
+        displayWinner,
+        reset
+    }
+})();
 playGame.initGame()
+
 
