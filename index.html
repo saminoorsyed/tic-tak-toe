@@ -12,18 +12,18 @@
     <div class="interface">
         <form action="" method="post">
             <select name="mode" id="mode">
+                <option value="easy">easy</option>
+                <option value="medium">medium</option>
+                <option value="hard">hard</option>
                 <option value="play a friend">play a friend</option>
-                <option value="easy cp">easy cp</option>
-                <option value="medium cp">medium cp</option>
-                <option value="hard cp">hard cp</option>
             </select>
         </form>
         <div class="players">
             <div class="playerX">
-                <p class="name">Player X</p>
+                <p class="name" data-flag="true">Player X</p>
             </div>
             <div class="playerO">
-                <p class="name">Player O</p>
+                <p class="name" data-flag="false">Player O</p>
             </div>
         </div>
         <div class="prompt">
@@ -64,5 +64,5 @@
     </div>
     
 </body>
-<script src="./script.js"></script>
+<script src="./moduleScript.js"></script>
 </html>

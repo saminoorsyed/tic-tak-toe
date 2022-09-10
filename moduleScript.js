@@ -9,7 +9,7 @@ const gameBoard=(()=>{
     let _playerOMoves = [];
 
     const pushPlayerMove = (playerFlag, move) => {
-        playerFlag ? player = _playerXMoves.push(move) : player = _playerOMoves.push(move);
+        playerFlag ?  _playerXMoves.push(move) : _playerOMoves.push(move);
     }
 
     const getPlayerMoves = (playerFlag) => {
@@ -32,27 +32,24 @@ const gameBoard=(()=>{
 })();
 
 // factory function that maintains the player flag and combines that to push the player move to GameBoard
-const Player = (playerFlag)=>{
-    // true playerflag is for X, false is for O
+const Player = (player)=>{
+    const playerFlag = player;
+    // true playerFlag is for X, false is for O
     const makeMove = (move) => {
-        gameBoard.pushPlayerMove(playerFlag, move)
+        if (gameBoard.getAllMoves.length === 9) return;
+        gameBoard.pushPlayerMove(playerFlag, move);
     }
 
     return {
         makeMove,
+
     }
 }
 
 // module to handle computer moves
-const Computer = (()=>{
+const computer = (()=>{
     'use strict';
-    
-    let difficulty;
-    
-    const setDifficulty = (gameMode) => {
-        difficulty = gameMode;
-    }
-    const chooseMove = () => {
+    const chooseMove = (difficulty) => {
         if (difficulty === 'easy'){
             return chooseRand();
         }else if (difficulty === 'medium'){
@@ -84,11 +81,7 @@ const Computer = (()=>{
     }
 })();
 
-const Game = (()=> {
-
-    const playerX = Player(true);
-    const playerO = Player(false);
-    
+const game = (()=> {
     const checkWin =(playerFlag) => checkRows(playerFlag) || checkCols(playerFlag) || checkDiag(playerFlag);
     checkRows =(playerFlag)=>{
         const player = gameBoard.getPlayerMoves(playerFlag)
@@ -113,8 +106,63 @@ const Game = (()=> {
         return false
     }
     return {
-        playerO,
-        playerX,
-        checkWin
+        checkWin,
     }
-})
+})();
+
+// plays the game
+const playGame = (() =>{
+    // element selectors
+    const gameMode = document.querySelector('select')
+    const spaces = document.querySelectorAll('.draw');
+    const chooseO = document.querySelector('.playerO');
+    const chooseX = document.querySelector('.playerX');
+    
+    let playerX = Player(true);
+    let playerO = Player(false);
+    let gameStart = false
+    // true for x, false for o
+    let playerTurn = true;
+    const initGame = () => {
+        spaces.forEach(space => space.addEventListener('click', _playGame));
+        chooseO.addEventListener('click', setPlayerTurn);
+        chooseX.addEventListener('click', setPlayerTurn);
+        }
+    const setPlayerTurn = (e)=>{
+        if (gameStart) return
+        if ("false" === e.target.dataset.flag){
+           const move = computer.chooseMove(gameMode.value);
+           playerX.makeMove(move);
+           drawMove(spaces[move]);
+           gameStart = true;
+        }
+    }
+    const drawMove = (moveCanvas) => {
+        const canvas = moveCanvas
+        const ctx = canvas.getContext("2d");
+        if (playerTurn){
+            ctx.beginPath();
+            ctx.moveTo(0,0);
+            ctx.lineTo(100,100);
+            ctx.moveTo(100,0);
+            ctx.lineTo(0,100);
+            ctx.stroke();
+        }else {
+            ctx.beginPath();
+            ctx.arc(50,50,45,0,2*Math.PI);
+            ctx.stroke();
+        }
+    }
+
+    const _playGame = (e)=>{
+        gameStart = true
+        move = parseInt(e.target.dataset.spot);
+
+    }
+    return {
+        initGame,
+    }
+})();
+
+playGame.initGame()
+
