@@ -83,6 +83,7 @@ const computer = (()=>{
 
 const game = (()=> {
     const checkWin =(playerFlag) => checkRows(playerFlag) || checkCols(playerFlag) || checkDiag(playerFlag);
+    
     checkRows =(playerFlag)=>{
         const player = gameBoard.getPlayerMoves(playerFlag)
         for (let i=1; i<=7; i+=3){
@@ -170,12 +171,37 @@ const playGame = (() =>{
         }
         player.makeMove(move)
         drawMove(spaces[move-1])
+        if (game.checkWin(playerTurn)){
+            winner();
+            return
+        }
         playerTurn = !playerTurn;
         const cpMove = computer.chooseMove(gameMode.value);
         comp.makeMove(cpMove);
-        console.log(cpMove)
         drawMove(spaces[cpMove-1]);
+        if (game.checkWin(playerTurn)){
+            winner();
+            return
+        }
         playerTurn = !playerTurn;
+
+    }
+    
+    const winner = ()=>{
+        displayWinner();
+        reset();
+    }
+
+    const displayWinner = ()=>{
+        console.log("winner!")
+    }
+    const reset = ()=> {
+        gameBoard.reset()
+        spaces.forEach((space) => {
+            ctx = space.getContext('2d')
+            ctx.clearRect(0,0,100,100)
+        })
+
 
     }
     return {
