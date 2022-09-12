@@ -1,6 +1,7 @@
 // modularized version of code
 // structured with the following modules: gameBoard, computer, display, gameFlow
-
+let score;
+console.log(score)
 
 // tracks and gets player and computer moves, resets the move arrays
 const gameBoard=(()=>{

@@ -12,8 +12,8 @@ const gameBoard=(()=>{
 
     const checkWin =(player) => checkRows(player) || checkCols(player) || checkDiag(player);
     
-    checkRows =(player)=>{
-        const moves = player.moves
+    const checkRows =(player)=>{
+        const moves = player.getMoves();
         for (let i=1; i<=7; i+=3){
             if (moves.includes(i) && moves.includes(i+1) && moves.includes(i+2)){
                 return true;
@@ -21,23 +21,23 @@ const gameBoard=(()=>{
         }
         return false;
     }
-    checkCols =(player)=>{
-        const moves = player.moves;
+    const checkCols =(player)=>{
+        const moves = player.getMoves();
         for (let i=1; i<=3; i++){
             if (moves.includes(i) && moves.includes(i+3) && moves.includes(i+6)) return true;
         }
         return false
     }
-    checkDiag =(player)=>{
-        const moves = player.moves
+    const checkDiag =(player)=>{
+        const moves = player.getMoves();
         if (moves.includes(1) && moves.includes(5) && moves.includes(9)) return true;
         if (moves.includes(3) && moves.includes(5) && moves.includes(7)) return true;
         return false;
     }
 
-    const checkDraw = ()=>{
+    const checkDraw = (playerX, playerO)=>{
         const allMoves = [1,2,3,4,5,6,7,8,9]
-        if (!checkWin(true) && !checkWin(false) && getAllMoves().sort()=== allMoves) return true;
+        if (!checkWin(playerX) && !checkWin(playerO) && getAllMoves(playerX, playerO).sort()=== allMoves) return true;
         return false;
     }
 
@@ -87,7 +87,7 @@ const computer = (()=>{
     let maxPlayer;
     let minPlayer;
 
-    let score = {
+    let scores = {
         X: 1,
         O: -1,
         tie: 0,
@@ -101,7 +101,7 @@ const computer = (()=>{
                 return 'O'
             }
         }
-        if(gameBoard.checkDraw){
+        if(gameBoard.checkDraw()){
             return 'tie'
         }
         return false
@@ -120,20 +120,20 @@ const computer = (()=>{
             playGame.playerO.getMoves().forEach(move => minPlayer.pushMove(move))
 
         } else{
-            // the computer is player Y
-            playGame.playerX.getMoves().forEach(move => minPlayer.pushMove(move))
+            // the computer is player 'O'
+            playGame.playerO.getMoves().forEach(move => minPlayer.pushMove(move))
             playGame.playerX.getMoves().forEach(move => maxPlayer.pushMove(move))
 
         }
         if (difficulty === 'medium'){
             return chooseMedium();
         } 
-        return chooseUnbeatable();
+        return chooseUnbeatable(maxPlayer);
     }
 
     const chooseRand =() =>{
         let move = 0
-        const moves = gameBoard.getAllMoves()
+        const moves = gameBoard.getAllMoves(playGame.playerX, playGame.playerO)
         while (moves.includes(move)|| move === 0){
             move = Math.round((Math.random()*9)+.49)
         }
@@ -144,26 +144,31 @@ const computer = (()=>{
         return
     }
 
-    const chooseUnbeatable =(player) =>{
+    const chooseUnbeatable =(player, tally) =>{
         // if there is a win or a draw after the last move, return the appropriate score
-        if (whoWon(player)!== false) return score[whoWon];
-        let bestScore = -Infinity;
+        let bestScore = -Infinity
+        let worstScore = Infinity
         let bestMove;
-        for (i = 1; i<10 ; i++) {
+        for (let i = 1; i<10 ; i++) {
             if (gameBoard.getAllMoves(maxPlayer,minPlayer).includes(i)) continue
             player.pushMove(i)
-            move
+            if (gameBoard.checkWin(player)){
+                console.log('hello')
+                if (player === maxPlayer) return 1
+                if (player === minPlayer) return -1
+            };
+            if (gameBoard.checkDraw(maxPlayer, minPlayer)) return 0
             if (player.playerFlag == maxPlayer.playerFlag) {
-                let score = chooseUnbeatable(minPlayer)
+                let score = tally + chooseUnbeatable(minPlayer,)
                 if (score > bestScore){
                     bestScore = score
-                    bestMove = move
+                    bestMove = i
                 }
             }
             if (player.playerFlag == minPlayer.playerFlag){
                 let score = chooseUnbeatable(maxPlayer)
-                if (score < bestScore){
-                    bestScore = score
+                if (score < worstScore){
+                    worstScore = score
                 }
             }
             player.popMove()
@@ -201,7 +206,7 @@ const playGame = (() =>{
         chooseO.classList.add('highlighted')
         chooseX.classList.remove('highlighted')
         const move = computer.chooseMove(gameMode.value);
-        playerX.makeMove(move);
+        playerX.pushMove(move);
         drawMove(spaces[move-1]);
         gameStart = true;
         playerTurn = false;
@@ -227,7 +232,7 @@ const playGame = (() =>{
     // flow of the game log and make player move, then computer move, check for win after each move.
     const _playGame = (e)=>{
         gameStart = true
-        move = parseInt(e.target.dataset.spot);
+        let move = parseInt(e.target.dataset.spot);
         let player;
         let comp;
         if (playerTurn){
@@ -237,21 +242,20 @@ const playGame = (() =>{
             player = playerO;
             comp = playerX
         }
-        if (gameBoard.getAllMoves().includes(move)){
-            return
-        }
-        player.makeMove(move)
+        if (gameBoard.getAllMoves(playerO,playerX).includes(move)) return
+        player.pushMove(move)
         drawMove(spaces[move-1])
-        if (game.checkWin(playerTurn)){
+        if (gameBoard.checkWin(player)){
             animateGame.displayWinner(player);
             setTimeout(reset, 2000);
             return
         }
         playerTurn = !playerTurn;
-        const cpMove = computer.chooseMove(gameMode.value);
-        comp.makeMove(cpMove);
-        drawMove(spaces[cpMove-1]);
-        if (game.checkWin(playerTurn)){
+        move = computer.chooseMove(gameMode.value, playerTurn);
+        comp.pushMove(move);
+        console.log(move)
+        drawMove(spaces[move-1]);
+        if (gameBoard.checkWin(comp)){
             animateGame.displayWinner(comp);
             setTimeout(reset, 2000);
             return
@@ -261,7 +265,8 @@ const playGame = (() =>{
     
 
     const reset = ()=> {
-        gameBoard.reset()
+        playerO.reset()
+        playerX.reset()
         animateGame.reset()
         chooseO.classList.remove('highlighted');
         chooseX.classList.add('highlighted');
