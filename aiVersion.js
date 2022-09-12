@@ -2,56 +2,81 @@
 // structured with the following modules: gameBoard, computer, display, gameFlow
 
 
-// tracks and gets player and computer moves, resets the move arrays
+// contains the functionality for getting all the player moves and checking the status of the game
 const gameBoard=(()=>{
     'use strict'
-    let _playerXMoves = [];
-    let _playerOMoves = [];
-
-    const pushPlayerMove = (playerFlag, move) => {
-        playerFlag ?  _playerXMoves.push(move) : _playerOMoves.push(move);
+    // takes two player objects and returns all moves made on the board
+    const getAllMoves = (playerX, playerO)=>{
+        return playerX.getMoves().concat(playerO.getMoves())
     }
 
-    const getPlayerMoves = (playerFlag) => {
-        return playerFlag ? _playerXMoves : _playerOMoves;
+    const checkWin =(player) => checkRows(player) || checkCols(player) || checkDiag(player);
+    
+    checkRows =(player)=>{
+        const moves = player.moves
+        for (let i=1; i<=7; i+=3){
+            if (moves.includes(i) && moves.includes(i+1) && moves.includes(i+2)){
+                return true;
+            }
+        }
+        return false;
     }
-    const getAllMoves = ()=>{
-        return _playerOMoves.concat(_playerXMoves)
+    checkCols =(player)=>{
+        const moves = player.moves;
+        for (let i=1; i<=3; i++){
+            if (moves.includes(i) && moves.includes(i+3) && moves.includes(i+6)) return true;
+        }
+        return false
     }
-    const reset = ()=> {
-        _playerXMoves = [];
-        _playerOMoves = [];
+    checkDiag =(player)=>{
+        const moves = player.moves
+        if (moves.includes(1) && moves.includes(5) && moves.includes(9)) return true;
+        if (moves.includes(3) && moves.includes(5) && moves.includes(7)) return true;
+        return false;
+    }
+
+    const checkDraw = ()=>{
+        const allMoves = [1,2,3,4,5,6,7,8,9]
+        if (!checkWin(true) && !checkWin(false) && getAllMoves().sort()=== allMoves) return true;
+        return false;
     }
 
     return {
-        pushPlayerMove,
-        getPlayerMoves,
         getAllMoves,
-        reset,
+        checkWin,
+        checkDraw
     }
 })();
 
-// factory function that maintains the player flag and combines that to push the player move to GameBoard
-const Player = (player)=>{
+// factory function that maintains the player flag 
+const Player = (flag)=>{
     const moves = []
-    const playerFlag = player;
+    const playerFlag = flag;
     // true playerFlag is for X, false is for O
-    const makeMove = (move) => {
-        if (gameBoard.getAllMoves.length === 9) return;
-        gameBoard.pushPlayerMove(playerFlag, move);
+    
+    const pushMove = (move) => {
+        moves.push(move);
+    }
+    const popMove = () => {
+        moves.pop();
     }
     const getMoves = () => {
-        return gameBoard.getPlayerMoves(playerFlag);
+        return moves;
     }
     const getName = () => {
         return playerFlag ? "X" : "O";
     }
-
+    const reset = () =>{
+        while (moves[0]){
+            moves.pop()
+        }
+    }
     return {
-        makeMove,
         getMoves,
         getName,
-
+        popMove,
+        pushMove,
+        reset,
     }
 }
 
@@ -59,26 +84,24 @@ const Player = (player)=>{
 const computer = (()=>{
     'use strict';
 
-    let maxPlayer;
-    let minPlayer; 
-
     let score = {
         X: 1,
         O: -1,
         tie: 0,
     }
 
-    const whoWon =() => {
-        if (game.checkWin(true)){
-            return 'X'
-        }else if (game.checkWin(false)) {
-            return 'O'
-        }else if (game.checkDraw){
-            return 'tie'
-        }else{
+    const whoWon =(player) => {
+        if (gameBoard.checkWin(player)){
+            if (player.playerFlag) {
+                return 'X'
+            }else if (!player.playerFlag){
+                return 'O'
+            }
+        }else if(gameBoard.checkDraw){
             return false
-        }
+        }else return null
     }
+    
 
     const chooseMove = (difficulty) => {
         if (difficulty === 'easy'){
@@ -115,44 +138,6 @@ const computer = (()=>{
 
     return{
         chooseMove
-    }
-})();
-
-
-const game = (()=> {
-    const checkWin =(playerFlag) => checkRows(playerFlag) || checkCols(playerFlag) || checkDiag(playerFlag);
-    
-    checkRows =(playerFlag)=>{
-        const player = gameBoard.getPlayerMoves(playerFlag)
-        for (let i=1; i<=7; i+=3){
-            if (player.includes(i) && player.includes(i+1) && player.includes(i+2)){
-                return true;
-            }
-        }
-        return false;
-    }
-    checkCols =(playerFlag)=>{
-        const player = gameBoard.getPlayerMoves(playerFlag);
-        for (let i=1; i<=3; i++){
-            if (player.includes(i) && player.includes(i+3) && player.includes(i+6)) return true;
-        }
-        return false
-    }
-    checkDiag =(playerFlag)=>{
-        const player = gameBoard.getPlayerMoves(playerFlag)
-        if (player.includes(1) && player.includes(5) && player.includes(9)) return true;
-        if (player.includes(3) && player.includes(5) && player.includes(7)) return true;
-        return false;
-    }
-
-    const checkDraw = ()=>{
-        const allMoves = [1,2,3,4,5,6,7,8,9]
-        if (!checkWin(true) && !checkWin(false) && gameBoard.getAllMoves().sort()=== allMoves) return true;
-        return false;
-    }
-    return {
-        checkWin,
-        checkDraw,
     }
 })();
 
