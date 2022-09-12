@@ -84,6 +84,9 @@ const Player = (flag)=>{
 const computer = (()=>{
     'use strict';
 
+    let maxPlayer;
+    let minPlayer;
+
     let score = {
         X: 1,
         O: -1,
@@ -97,20 +100,35 @@ const computer = (()=>{
             }else if (!player.playerFlag){
                 return 'O'
             }
-        }else if(gameBoard.checkDraw){
-            return false
-        }else return null
+        }
+        if(gameBoard.checkDraw){
+            return 'tie'
+        }
+        return false
     }
     
 
-    const chooseMove = (difficulty) => {
+    const chooseMove = (difficulty, computerFlag) => {
         if (difficulty === 'easy'){
             return chooseRand();
-        }else if (difficulty === 'medium'){
-            return chooseMedium();
-        }else {
-            return chooseUnbeatable();
         }
+        maxPlayer = Player(computerFlag)
+        minPlayer = Player(!computerFlag)
+        if (computerFlag){
+            // the computer is player X
+            playGame.playerX.getMoves().forEach(move => maxPlayer.pushMove(move))
+            playGame.playerO.getMoves().forEach(move => minPlayer.pushMove(move))
+
+        } else{
+            // the computer is player Y
+            playGame.playerX.getMoves().forEach(move => minPlayer.pushMove(move))
+            playGame.playerX.getMoves().forEach(move => maxPlayer.pushMove(move))
+
+        }
+        if (difficulty === 'medium'){
+            return chooseMedium();
+        } 
+        return chooseUnbeatable();
     }
 
     const chooseRand =() =>{
@@ -126,12 +144,31 @@ const computer = (()=>{
         return
     }
 
-    const chooseUnbeatable =(computerFlag) =>{
+    const chooseUnbeatable =(player) =>{
         // if there is a win or a draw after the last move, return the appropriate score
-        if (whoWon()!== false) return score[whoWon];
-
-
-        return
+        if (whoWon(player)!== false) return score[whoWon];
+        let bestScore = -Infinity;
+        let bestMove;
+        for (i = 1; i<10 ; i++) {
+            if (gameBoard.getAllMoves(maxPlayer,minPlayer).includes(i)) continue
+            player.pushMove(i)
+            move
+            if (player.playerFlag == maxPlayer.playerFlag) {
+                let score = chooseUnbeatable(minPlayer)
+                if (score > bestScore){
+                    bestScore = score
+                    bestMove = move
+                }
+            }
+            if (player.playerFlag == minPlayer.playerFlag){
+                let score = chooseUnbeatable(maxPlayer)
+                if (score < bestScore){
+                    bestScore = score
+                }
+            }
+            player.popMove()
+        }
+        return bestMove
     }
 
 
