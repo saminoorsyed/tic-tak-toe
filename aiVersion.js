@@ -6,8 +6,8 @@
 const gameBoard=(()=>{
     'use strict'
     // takes two player objects and returns all moves made on the board
-    const getAllMoves = (playerX, playerO)=>{
-        return playerX.getMoves().concat(playerO.getMoves())
+    const getAllMoves = (player1, player2)=>{
+        return player1.getMoves().concat(player2.getMoves())
     }
 
     const checkWin =(player) => checkRows(player) || checkCols(player) || checkDiag(player);
@@ -35,10 +35,9 @@ const gameBoard=(()=>{
         return false;
     }
 
-    const checkDraw = (playerX, playerO)=>{
-        const allMoves = [1,2,3,4,5,6,7,8,9]
-        if (!checkWin(playerX) && !checkWin(playerO) && getAllMoves(playerX, playerO).sort()=== allMoves) return true;
-        return false;
+    const checkDraw = (player1, player2)=>{
+        console.log(getAllMoves(player1, player2).length ===9);
+        return (getAllMoves(player1, player2).length ===9)
     }
 
     return {
@@ -77,6 +76,7 @@ const Player = (flag)=>{
         popMove,
         pushMove,
         reset,
+        playerFlag
     }
 }
 
@@ -86,26 +86,6 @@ const computer = (()=>{
 
     let maxPlayer;
     let minPlayer;
-
-    let scores = {
-        X: 1,
-        O: -1,
-        tie: 0,
-    }
-
-    const whoWon =(player) => {
-        if (gameBoard.checkWin(player)){
-            if (player.playerFlag) {
-                return 'X'
-            }else if (!player.playerFlag){
-                return 'O'
-            }
-        }
-        if(gameBoard.checkDraw()){
-            return 'tie'
-        }
-        return false
-    }
     
 
     const chooseMove = (difficulty, computerFlag) => {
@@ -114,10 +94,10 @@ const computer = (()=>{
         }
         maxPlayer = Player(computerFlag)
         minPlayer = Player(!computerFlag)
-        if (computerFlag){
+        if (!computerFlag){
             // the computer is player X
-            playGame.playerX.getMoves().forEach(move => maxPlayer.pushMove(move))
-            playGame.playerO.getMoves().forEach(move => minPlayer.pushMove(move))
+            playGame.playerX.getMoves().forEach(move => minPlayer.pushMove(move))
+            playGame.playerO.getMoves().forEach(move => maxPlayer.pushMove(move))
 
         } else{
             // the computer is player 'O'
@@ -134,6 +114,7 @@ const computer = (()=>{
     const chooseRand =() =>{
         let move = 0
         const moves = gameBoard.getAllMoves(playGame.playerX, playGame.playerO)
+        if (gameBoard.getAllMoves(playGame.playerX,playGame.playerO).length === 9) return 
         while (moves.includes(move)|| move === 0){
             move = Math.round((Math.random()*9)+.49)
         }
@@ -144,36 +125,54 @@ const computer = (()=>{
         return
     }
 
-    const chooseUnbeatable =(player, tally) =>{
+    const chooseUnbeatable =(player) =>{
         // if there is a win or a draw after the last move, return the appropriate score
         let bestScore = -Infinity
-        let worstScore = Infinity
-        let bestMove;
+        let bestMove=1;
         for (let i = 1; i<10 ; i++) {
             if (gameBoard.getAllMoves(maxPlayer,minPlayer).includes(i)) continue
             player.pushMove(i)
-            if (gameBoard.checkWin(player)){
-                console.log('hello')
-                if (player === maxPlayer) return 1
-                if (player === minPlayer) return -1
-            };
-            if (gameBoard.checkDraw(maxPlayer, minPlayer)) return 0
-            if (player.playerFlag == maxPlayer.playerFlag) {
-                let score = tally + chooseUnbeatable(minPlayer,)
-                if (score > bestScore){
-                    bestScore = score
-                    bestMove = i
-                }
-            }
-            if (player.playerFlag == minPlayer.playerFlag){
-                let score = chooseUnbeatable(maxPlayer)
-                if (score < worstScore){
-                    worstScore = score
-                }
+            let score = minimax(0,player)
+            if (score > bestScore){
+                bestScore = score
+                bestMove = i
             }
             player.popMove()
         }
         return bestMove
+    }
+
+    const minimax = (depth, player) => {
+        if (gameBoard.checkWin(player)){
+            if (player === maxPlayer) return -1
+            if (player === minPlayer) return 1
+        };
+        if (gameBoard.checkDraw(maxPlayer, minPlayer)) return 0
+        
+        if (player === maxPlayer){
+            let bestScore = -Infinity
+            for( let i = 1; i<10 ; i++){
+                if (!gameBoard.getAllMoves(maxPlayer,minPlayer).includes(i)){
+                    player.pushMove(i)
+                    let score = minimax(depth + 1, minPlayer)
+                    player.popMove()
+                    bestScore = Math.max(score , bestScore)
+                }
+            }
+            return bestScore
+        }
+        if (player === minPlayer){
+            let bestScore = Infinity
+            for( let i = 1; i<1 ; i++){
+                if (!gameBoard.getAllMoves(maxPlayer,minPlayer).includes(i)){
+                player.pushMove(i)
+                let score = minimax(depth + 1, maxPlayer)
+                player.popMove()
+                bestScore = Math.min(score, bestScore)
+                }
+            }
+            return bestScore
+        }
     }
 
 
@@ -201,7 +200,7 @@ const playGame = (() =>{
         chooseO.addEventListener('click', setPlayerTurn);
         chooseX.classList.add('highlighted')
         }
-    const setPlayerTurn = (e)=>{
+    const setPlayerTurn = ()=>{
         if (gameStart) return
         chooseO.classList.add('highlighted')
         chooseX.classList.remove('highlighted')
@@ -245,6 +244,10 @@ const playGame = (() =>{
         if (gameBoard.getAllMoves(playerO,playerX).includes(move)) return
         player.pushMove(move)
         drawMove(spaces[move-1])
+        if(gameBoard.checkDraw(playerX,playerO)) {
+            animateGame.spinAll()
+            return
+        }
         if (gameBoard.checkWin(player)){
             animateGame.displayWinner(player);
             setTimeout(reset, 2000);
@@ -253,8 +256,12 @@ const playGame = (() =>{
         playerTurn = !playerTurn;
         move = computer.chooseMove(gameMode.value, playerTurn);
         comp.pushMove(move);
-        console.log(move)
         drawMove(spaces[move-1]);
+        // console.log(gameBoard.checkDraw(playerX,playerO))
+        if(gameBoard.checkDraw(playerX,playerO)) {
+            animateGame.spinAll()
+            return
+        }
         if (gameBoard.checkWin(comp)){
             animateGame.displayWinner(comp);
             setTimeout(reset, 2000);
@@ -306,6 +313,13 @@ const animateGame = (()=>{
         })
     }
 
+    const spinAll = () =>{
+        playGame.spaces.forEach(space => {
+            space.classList.add('spin')
+        });
+    }
+
+
     const reset = ()=>{
         playGame.spaces.forEach(space => {
                 space.classList.remove('spin')
@@ -315,7 +329,8 @@ const animateGame = (()=>{
     
     return{
         displayWinner,
-        reset
+        reset,
+        spinAll
     }
 })();
 playGame.initGame()
