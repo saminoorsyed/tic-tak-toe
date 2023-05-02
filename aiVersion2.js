@@ -90,6 +90,7 @@ const computer = (() => {
     if (difficulty === "easy") {
       return chooseRand();
     }
+    let computerChar
     maxPlayer = Player(computerFlag);
     minPlayer = Player(!computerFlag);
     if (computerFlag) {
@@ -101,8 +102,7 @@ const computer = (() => {
       playGame.playerO.getMoves().forEach((move) => maxPlayer.pushMove(move));
       playGame.playerX.getMoves().forEach((move) => minPlayer.pushMove(move));
     }
-    console.log(computerFlag)
-    return minimax(computerFlag, 0, 0);
+    return findBestMove();
     };
   // function to choose a random unchosen square on th
     const chooseRand = () => {
@@ -116,10 +116,27 @@ const computer = (() => {
         return move;
     };
 
-    const minimax = (flag, depth, score = 0) => {
-        let bestMove;
-        let adder;
-        let bestScore = -Infinity;
+    const findBestMove =()=>{
+        let bestScore = -Infinity
+        let bestMove
+        for (let i = 1; i<10; i++){
+            if (gameBoard.getAllMoves(minPlayer, maxPlayer).includes(i)){
+                continue
+            }
+            else{
+                maxPlayer.pushMove(i)
+                let score = minimax(false, 0)
+                maxPlayer.popMove()
+                if (score > bestScore){
+                    bestScore = score
+                    bestMove = i
+                }
+            }
+        }
+        return bestMove
+    }
+
+    const minimax = (maximizingPlayer, depth) => {
         if (gameBoard.checkWin(maxPlayer)) {
             return 1*(8-depth);
         }
@@ -130,35 +147,35 @@ const computer = (() => {
             return 0;
         }
 
-        for (let i = 1; i < 10; i++) {
-            if (gameBoard.getAllMoves(maxPlayer, minPlayer).includes(i)) {
-                continue;
+        if (maximizingPlayer){
+            let maxScore = -Infinity
+            for (let i= 1; i<10; i++){
+                if (gameBoard.getAllMoves(minPlayer, maxPlayer).includes(i)){
+                    continue
+                }else{
+                    maxPlayer.pushMove(i)
+                    let score = minimax(false, depth+1)
+                    maxPlayer.popMove()
+                    maxScore = Math.max(maxScore, score)
+                }
             }
-            if (flag) {
-                maxPlayer.pushMove(i);
-                adder = minimax(!flag, depth + 1, score);
-                score += adder
-                maxPlayer.popMove();
-            } else {
-                minPlayer.pushMove(i);
-                adder = minimax(!flag, depth + 1, score);
-                score+= adder
-                minPlayer.popMove();
+            return maxScore
+        }else {
+            let minScore = Infinity
+            for (let i=1; i<10; i++){
+                if (gameBoard.getAllMoves(minPlayer, maxPlayer).includes(i)){
+                    continue
+                }else{
+                    minPlayer.pushMove(i)
+                    let score = minimax(true, depth+1)
+                    minPlayer.popMove()
+                    minScore = Math.min(minScore, score)
+                }
             }
-            if (score && score > bestScore) {
-                console.log(maxPlayer.getMoves());
-                console.log(score)
-                bestScore = score;
-                bestMove = i;
-            }
-            score -= adder;
-            }
-        if (depth === 0){
-            return bestMove;
-        }else{
-            return 0
+            return minScore
         }
     };
+
     return {
         chooseMove,
     }
