@@ -90,6 +90,7 @@ const computer = (() => {
     if (difficulty === "easy") {
       return chooseRand();
     }
+    let computerChar
     maxPlayer = Player(computerFlag);
     minPlayer = Player(!computerFlag);
     if (computerFlag) {
@@ -101,8 +102,7 @@ const computer = (() => {
       playGame.playerO.getMoves().forEach((move) => maxPlayer.pushMove(move));
       playGame.playerX.getMoves().forEach((move) => minPlayer.pushMove(move));
     }
-    console.log(computerFlag)
-    return minimax(computerFlag, 0, 0);
+    return findBestMove();
     };
   // function to choose a random unchosen square on th
     const chooseRand = () => {
@@ -116,49 +116,73 @@ const computer = (() => {
         return move;
     };
 
-    const minimax = (flag, depth, score = 0) => {
-        let bestMove;
-        let adder;
-        let bestScore = -Infinity;
+    const findBestMove =()=>{
+        let bestScore = -Infinity
+        let bestMove
+        for (let i = 1; i<10; i++){
+            if (gameBoard.getAllMoves(minPlayer, maxPlayer).includes(i)){
+                continue
+            }
+            else{
+                maxPlayer.pushMove(i)
+                let score = minimax(false, 0, -Infinity, Infinity)
+                maxPlayer.popMove()
+                if (score > bestScore){
+                    bestScore = score
+                    bestMove = i
+                }
+            }
+        }
+        return bestMove
+    }
+
+    // minimax with alpha beta pruning
+    const minimax = (maximizingPlayer, depth, alpha, beta) => {
+        // return scores based on depth, 
         if (gameBoard.checkWin(maxPlayer)) {
-            return 1*(8-depth);
+            return 1*(10-depth);
         }
         if (gameBoard.checkWin(minPlayer)) {
-            return -1*(8-depth);
+            return -1*(10-depth);
         }
         if (gameBoard.checkDraw(maxPlayer, minPlayer)) {
             return 0;
         }
-
-        for (let i = 1; i < 10; i++) {
-            if (gameBoard.getAllMoves(maxPlayer, minPlayer).includes(i)) {
-                continue;
+        // optimize for maximizing player
+        if (maximizingPlayer){
+            let maxScore = -Infinity
+            for (let i= 1; i<10; i++){
+                if (gameBoard.getAllMoves(minPlayer, maxPlayer).includes(i)){
+                    continue
+                }else{
+                    maxPlayer.pushMove(i)
+                    let score = minimax(false, depth+1, alpha, beta)
+                    maxPlayer.popMove()
+                    maxScore = Math.max(maxScore, score)
+                    alpha = Math.max(alpha, maxScore)
+                    if (beta <= alpha) break
+                }
             }
-            if (flag) {
-                maxPlayer.pushMove(i);
-                adder = minimax(!flag, depth + 1, score);
-                score += adder
-                maxPlayer.popMove();
-            } else {
-                minPlayer.pushMove(i);
-                adder = minimax(!flag, depth + 1, score);
-                score+= adder
-                minPlayer.popMove();
+            return maxScore
+        }else {
+            // optimize for minimizing player
+            let minScore = Infinity
+            for (let i=1; i<10; i++){
+                if (gameBoard.getAllMoves(minPlayer, maxPlayer).includes(i)){
+                    continue
+                }else{
+                    minPlayer.pushMove(i)
+                    let score = minimax(true, depth+1, alpha, beta)
+                    minPlayer.popMove()
+                    minScore = Math.min(minScore, score)
+                    beta = Math.min(beta, minScore)
+                    if (beta <= alpha) break
+                }
             }
-            if (score && score > bestScore) {
-                console.log(maxPlayer.getMoves());
-                console.log(score)
-                bestScore = score;
-                bestMove = i;
-            }
-            score -= adder;
-            }
-        if (depth === 0){
-            return bestMove;
-        }else{
-            return 0
+            return minScore
         }
     };
+
     return {
         chooseMove,
     }
@@ -176,21 +200,26 @@ const playGame = (() =>{
     let gameStart = false
     // true for x, false for o
     let playerTurn = true;
+    // function to initiate listeners for game upon loading
     const initGame = () => {
         spaces.forEach(space => space.addEventListener('click', _playGame));
         chooseO.addEventListener('click', setPlayerTurn);
         chooseX.classList.add('highlighted')
         }
+    // if a player elects to go second
     const setPlayerTurn = ()=>{
         if (gameStart) return
+        // highlight player choice so that it is visible
         chooseO.classList.add('highlighted')
         chooseX.classList.remove('highlighted')
+        // prompt computer to choose a square based on difficulty
         const move = computer.chooseMove(gameMode.value);
         playerX.pushMove(move);
         drawMove(spaces[move-1]);
         gameStart = true;
         playerTurn = false;
     }
+    // use canvas to draw X's and O's for player and computer
     const drawMove = (moveCanvas) => {
         const canvas = moveCanvas
         const ctx = canvas.getContext("2d");
@@ -208,13 +237,14 @@ const playGame = (() =>{
             ctx.stroke();
         }
     }
-    // careful with cp<ove and move values. they don't match with the node list index and need to be adjusted
     // flow of the game log and make player move, then computer move, check for win after each move.
     const _playGame = (e)=>{
         gameStart = true
+        // wherever a player has clicked
         let move = parseInt(e.target.dataset.spot);
         let player;
         let comp;
+        // assign player based on turn (if user chose to be 'O' rather than 'X')
         if (playerTurn){
             player = playerX;
             comp = playerO;
@@ -222,11 +252,14 @@ const playGame = (() =>{
             player = playerO;
             comp = playerX
         }
+        // can only choose spaces with empty squares
         if (gameBoard.getAllMoves(playerO,playerX).includes(move)) return
         player.pushMove(move)
+        // 
         drawMove(spaces[move-1])
         if(gameBoard.checkDraw(playerX,playerO)) {
             animateGame.spinAll()
+            setTimeout(reset, 2000);
             return
         }
         if (gameBoard.checkWin(player)){
@@ -238,9 +271,9 @@ const playGame = (() =>{
         move = computer.chooseMove(gameMode.value, playerTurn);
         comp.pushMove(move);
         drawMove(spaces[move-1]);
-        // console.log(gameBoard.checkDraw(playerX,playerO))
         if(gameBoard.checkDraw(playerX,playerO)) {
             animateGame.spinAll()
+            setTimeout(reset, 2000);
             return
         }
         if (gameBoard.checkWin(comp)){
@@ -298,6 +331,7 @@ const animateGame = (()=>{
         playGame.spaces.forEach(space => {
             space.classList.add('spin')
         });
+        prompt.textContent = "Draw!";
     }
 
 
@@ -305,7 +339,7 @@ const animateGame = (()=>{
         playGame.spaces.forEach(space => {
                 space.classList.remove('spin')
             });
-        prompt.textContent = 'Start the game of select a player'
+        prompt.textContent = 'Start the game or select a player'
     }
     
     return{
