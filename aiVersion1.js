@@ -259,13 +259,13 @@ const playGame = (() => {
     player.pushMove(move);
     //
     drawMove(spaces[move - 1]);
-    if (gameBoard.checkDraw(playerX, playerO)) {
-      animateGame.spinAll();
+    if (gameBoard.checkWin(player)) {
+      animateGame.displayWinner(player);
       setTimeout(reset, 2000);
       return;
     }
-    if (gameBoard.checkWin(player)) {
-      animateGame.displayWinner(player);
+    if (gameBoard.checkDraw(playerX, playerO)) {
+      animateGame.spinAll();
       setTimeout(reset, 2000);
       return;
     }
